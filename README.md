@@ -82,7 +82,7 @@ You can host **YouPlayer Web** directly on GitHub Pages with **zero server costs
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/<your-username>/youplayer-web.git
+git clone https://github.com/anyelo888ra-ux/youplayer-web/
 cd youplayer-web
 
 # 2. Install dependencies
