@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>YouPlayer Web — Pure Client-Side YouTube Player</title>
+  <meta name="description" content="100% Free & Open Source YouTube Client for GitHub Pages. No API key required.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f17">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: '#ef4444',
+            darkBg: '#0b0f17',
+            darkSurface: '#111827',
+            darkBorder: '#1f2937'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f17; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    .aspect-video { aspect-ratio: 16 / 9; }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-red-600 selection:text-white">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 bg-[#0b0f17]/95 backdrop-blur border-b border-[#1f2937] px-4 h-16 flex items-center justify-between gap-4">
+    <!-- Brand -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="loadTrending()">
+        <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center shadow-lg shadow-red-900/40">
+          <svg class="w-4 h-4 fill-white ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+          YouPlayer <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">Web</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex-1 max-w-xl hidden md:block">
+      <form id="searchForm" class="flex">
+        <input id="searchInput" type="text" placeholder="Search videos, channels, topics..." class="w-full bg-slate-900 border border-slate-700 rounded-l-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-red-500">
+        <button type="submit" class="px-5 bg-slate-800 hover:bg-slate-700 border border-l-0 border-slate-700 text-slate-300 rounded-r-xl transition flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <button onclick="showTab('dashboard')" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition" title="Dashboard">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </button>
+      <button onclick="exportUserData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 transition" title="Export Watch History & Playlists JSON">
+        Export JSON
+      </button>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-60 bg-[#0b0f17] border-r border-[#1f2937] p-3 flex flex-col gap-1 hidden md:flex shrink-0">
+      <button onclick="loadTrending()" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition text-red-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>Trending</span>
+      </button>
+      <button onclick="showTab('history')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition text-slate-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Watch History</span>
+      </button>
+      <button onclick="showTab('playlists')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition text-slate-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>Playlists</span>
+      </button>
+      <button onclick="showTab('dashboard')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition text-slate-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <div class="h-px bg-slate-800 my-2"></div>
+      <div class="p-3 text-[11px] text-slate-400 leading-tight">
+        <strong>YouPlayer Web</strong><br>
+        100% Free & Open Source<br>
+        No Google / YouTube API key. Hosted directly on GitHub Pages.
+      </div>
+    </aside>
+
+    <!-- MAIN VIEWPORT -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6" id="mainContainer">
+      <!-- Player View Area (hidden when browsing feeds) -->
+      <div id="playerSection" class="hidden max-w-5xl mx-auto mb-8">
+        <button onclick="closePlayer()" class="mb-3 text-xs text-slate-400 hover:text-white flex items-center gap-1 font-semibold">
+          ← Back to video feeds
+        </button>
+        <div class="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-[#1f2937]">
+          <iframe id="videoIframe" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="mt-4 p-4 bg-slate-900 border border-[#1f2937] rounded-2xl">
+          <h1 id="playerTitle" class="text-lg font-bold text-white"></h1>
+          <p id="playerChannel" class="text-xs text-red-400 mt-1 font-semibold"></p>
+          <div class="mt-3 flex items-center gap-3">
+            <button onclick="saveCurrentToWatchLater()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200">
+              + Save to Watch Later
+            </button>
+            <button onclick="copyCurrentShare()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200">
+              Share Video
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed Container -->
+      <div id="feedSection">
+        <h2 id="sectionTitle" class="text-lg font-bold text-white mb-4">Trending Feeds</h2>
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Videos dynamically injected here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    const PIPED_API = 'https://pipedapi.kavin.rocks';
+    let currentVideo = null;
+    let watchHistory = JSON.parse(localStorage.getItem('yp_history') || '[]');
+    let watchLater = JSON.parse(localStorage.getItem('yp_watchlater') || '[]');
+
+    const FALLBACK_VIDEOS = [
+      { id: 'dQw4w9WgXcQ', title: 'Rick Astley - Never Gonna Give You Up (Official Music Video)', channelTitle: 'Rick Astley', duration: '3:33', views: 1540000000, thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg' },
+      { id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny 4K 60fps Open Source Movie', channelTitle: 'Blender Foundation', duration: '10:34', views: 18200000, thumbnail: 'https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg' },
+      { id: 'jfKfPfyJRdk', title: 'Lofi Hip Hop Radio - Beats to Relax/Study to', channelTitle: 'Lofi Girl', duration: 'LIVE', views: 78000000, thumbnail: 'https://i.ytimg.com/vi/jfKfPfyJRdk/hqdefault.jpg' },
+      { id: 'Ke90Tje7VS0', title: 'React in 100 Seconds', channelTitle: 'Fireship', duration: '2:24', views: 2400000, thumbnail: 'https://i.ytimg.com/vi/Ke90Tje7VS0/hqdefault.jpg' }
+    ];
+
+    async function loadTrending() {
+      document.getElementById('sectionTitle').innerText = 'Trending Videos (Public Piped API)';
+      const grid = document.getElementById('videoGrid');
+      grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400">Loading feeds...</div>';
+
+      try {
+        const res = await fetch(`${PIPED_API}/trending?region=US`);
+        const data = await res.json();
+        const videos = data.filter(d => d.url).slice(0, 24).map(d => ({
+          id: d.url.replace('/watch?v=', ''),
+          title: d.title,
+          channelTitle: d.uploaderName,
+          duration: d.duration ? Math.floor(d.duration / 60) + ':' + (d.duration % 60 < 10 ? '0' : '') + (d.duration % 60) : '3:00',
+          views: d.views || 10000,
+          thumbnail: d.thumbnail || `https://i.ytimg.com/vi/${d.url.replace('/watch?v=', '')}/hqdefault.jpg`
+        }));
+        renderGrid(videos);
+      } catch (e) {
+        renderGrid(FALLBACK_VIDEOS);
+      }
+    }
+
+    function renderGrid(videos) {
+      const grid = document.getElementById('videoGrid');
+      grid.innerHTML = '';
+      videos.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'group bg-slate-900 border border-[#1f2937] rounded-xl overflow-hidden cursor-pointer hover:border-slate-700 transition flex flex-col';
+        card.onclick = () => playVideo(v);
+        card.innerHTML = `
+          <div class="relative aspect-video bg-black">
+            <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+            <span class="absolute bottom-2 right-2 bg-black/85 text-slate-200 text-[10px] font-mono px-1.5 py-0.5 rounded">${v.duration}</span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between">
+            <h3 class="text-xs font-semibold text-slate-100 line-clamp-2 group-hover:text-red-400">${v.title}</h3>
+            <p class="text-[11px] text-slate-400 mt-1 truncate">${v.channelTitle}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function playVideo(video) {
+      currentVideo = video;
+      document.getElementById('playerSection').classList.remove('hidden');
+      document.getElementById('videoIframe').src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&enablejsapi=1&rel=0`;
+      document.getElementById('playerTitle').innerText = video.title;
+      document.getElementById('playerChannel').innerText = video.channelTitle;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      watchHistory = [video, ...watchHistory.filter(h => h.id !== video.id)].slice(0, 50);
+      localStorage.setItem('yp_history', JSON.stringify(watchHistory));
+    }
+
+    function closePlayer() {
+      document.getElementById('playerSection').classList.add('hidden');
+      document.getElementById('videoIframe').src = '';
+    }
+
+    function saveCurrentToWatchLater() {
+      if (!currentVideo) return;
+      watchLater = [currentVideo, ...watchLater.filter(w => w.id !== currentVideo.id)];
+      localStorage.setItem('yp_watchlater', JSON.stringify(watchLater));
+      alert('Saved to Watch Later!');
+    }
+
+    function copyCurrentShare() {
+      if (!currentVideo) return;
+      navigator.clipboard.writeText(`https://youtu.be/${currentVideo.id}`);
+      alert('Video link copied to clipboard!');
+    }
+
+    function showTab(tab) {
+      closePlayer();
+      if (tab === 'history') {
+        document.getElementById('sectionTitle').innerText = `Watch History (${watchHistory.length})`;
+        renderGrid(watchHistory);
+      } else if (tab === 'playlists') {
+        document.getElementById('sectionTitle').innerText = `Watch Later (${watchLater.length})`;
+        renderGrid(watchLater);
+      } else if (tab === 'dashboard') {
+        document.getElementById('sectionTitle').innerText = 'User Analytics Dashboard';
+        const grid = document.getElementById('videoGrid');
+        grid.innerHTML = `
+          <div class="col-span-full p-6 bg-slate-900 border border-[#1f2937] rounded-2xl space-y-4">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Metrics Overview</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400">Total Videos Watched</span>
+                <p class="text-2xl font-bold text-white mt-1">${watchHistory.length}</p>
+              </div>
+              <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400">Saved in Watch Later</span>
+                <p class="text-2xl font-bold text-white mt-1">${watchLater.length}</p>
+              </div>
+              <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400">Storage Backend</span>
+                <p class="text-base font-bold text-emerald-400 mt-1">LocalStorage / IndexedDB</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function exportUserData() {
+      const data = { history: watchHistory, watchLater: watchLater, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'youplayer-data.json';
+      a.click();
+    }
+
+    document.getElementById('searchForm').onsubmit = (e) => {
+      e.preventDefault();
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) return;
+      document.getElementById('sectionTitle').innerText = `Search Results for "${q}"`;
+      fetch(`${PIPED_API}/search?q=${encodeURIComponent(q)}&filter=all`)
+        .then(r => r.json())
+        .then(data => {
+          const items = (data.items || []).filter(i => i.url).map(i => ({
+            id: i.url.replace('/watch?v=', ''),
+            title: i.title,
+            channelTitle: i.uploaderName,
+            duration: i.duration ? Math.floor(i.duration / 60) + ':' + (i.duration % 60 < 10 ? '0' : '') + (i.duration % 60) : '4:00',
+            views: i.views || 5000,
+            thumbnail: i.thumbnail || `https://i.ytimg.com/vi/${i.url.replace('/watch?v=', '')}/hqdefault.jpg`
+          }));
+          renderGrid(items);
+        })
+        .catch(() => renderGrid(FALLBACK_VIDEOS));
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    loadTrending();
+  </script>
+</body>
+</html>

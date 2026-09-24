@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gradBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="gradRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+    <linearGradient id="gradBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#ef4444" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  
+  <!-- Outer rounded background -->
+  <rect width="512" height="512" rx="128" fill="url(#gradBg)" stroke="#334155" stroke-width="8"/>
+  
+  <!-- Sleek Player Screen Card -->
+  <rect x="76" y="116" width="360" height="280" rx="48" fill="url(#gradRed)" filter="url(#glow)"/>
+  
+  <!-- Glass accent highlight -->
+  <path d="M 124 116 L 388 116 C 414 116 436 138 436 164 L 436 190 C 350 210 160 210 76 190 L 76 164 C 76 138 98 116 124 116 Z" fill="white" fill-opacity="0.15" />
+  
+  <!-- Crisp Play Triangle -->
+  <path d="M 216 196 L 340 256 L 216 316 Z" fill="#ffffff" />
+  
+  <!-- Pulse Dot (Live / Active) -->
+  <circle cx="390" cy="156" r="10" fill="#ffffff" />
+</svg>
